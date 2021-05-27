@@ -22,7 +22,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col">
+            <div class="col" style="float:left; width: 75%;">
                 <h3>Chat</h3>
                 <div class="form-group">
                     <label for="username">Username:</label>
@@ -37,14 +37,22 @@
                 <div id="output" class="chatbox">
                 </div>
             </div>
-            <div class="col">
+            <div class="col" style="float:left; width: 25%;">
                 <h3>Online</h3>
+                <ul id="online"></ul>
             </div>
         </div>
     </div>
 </body>
-    <script>
-        let socket = null;
+<script>
+let socket = null;
+
+window.onbeforeunload = function() {
+    console.log("Leaving");
+    let jsonData = {};
+    jsonData["action"] = "left";
+    socket.send(JSON.stringify(jsonData));
+}
 
 document.addEventListener("DOMContentLoaded", function() {
     socket = new WebSocket("ws://127.0.0.1:8080/ws");
@@ -58,8 +66,32 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     socket.onmessage = msg => {
-        console.log(msg);
+        let data = JSON.parse(msg.data);
+        console.log("Action:", data.action);
+
+        switch (data.action) {
+            case "list_users" :
+                let ul = document.getElementById("online");
+                while (ul.firstChild) ul.removeChild(ul.firstChild);
+
+                if (data.connected_users.length > 0) {
+                    data.connected_users.forEach(function (item) {
+                        let li = document.createElement("li");
+                        li.appendChild(document.createTextNode(item));
+                        ul.appendChild(li);
+                    })
+                }
+                break;
+        }
     }
+
+    let userInput = document.getElementById("username");
+    userInput.addEventListener("change", function () {
+        let jsonData = {};
+        jsonData["action"] = "username";
+        jsonData["username"] = this.value;
+        socket.send(JSON.stringify(jsonData));
+    })
 })
-    </script>
+</script>
 </html>
