@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"sort"
@@ -124,6 +125,10 @@ func ListenToWsChannel() {
 			response.Action = "list_users"
 			delete(clients, e.Conn)
 			response.ConnectedUsers = getUserList()
+			broadcastToAll(response)
+		case "broadcast":
+			response.Action = "broadcast"
+			response.Message = fmt.Sprintf("<strong>%s</strong>: %s", e.Username, e.Message)
 			broadcastToAll(response)
 		}
 	}
